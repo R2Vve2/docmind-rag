@@ -15,4 +15,5 @@ ignore = ["E501"]  # line length is advisory; long literals in tests are fine
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-q"
