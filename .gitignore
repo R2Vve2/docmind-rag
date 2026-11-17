@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+data/index/
+eval/results*.json
+pip.log
+.env
+*.egg-info/
+docker-build.log

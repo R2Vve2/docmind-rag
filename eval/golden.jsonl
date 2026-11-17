@@ -1,0 +1,15 @@
+{"question": "How many days of annual leave do full-time employees get?", "expected_doc": "Employee Handbook", "expected_keywords": ["24"]}
+{"question": "What is the maximum payload of the NX-200?", "expected_doc": "Nx200 Product Manual", "expected_keywords": ["12 kg"]}
+{"question": "How long are passwords required to be?", "expected_doc": "Information Security Policy", "expected_keywords": ["14"]}
+{"question": "Which branching model does the engineering team use?", "expected_doc": "Engineering Onboarding Faq", "expected_keywords": ["trunk"]}
+{"question": "Within how long must a suspected security incident be reported?", "expected_doc": "Information Security Policy", "expected_keywords": ["one hour"]}
+{"question": "How often does the NX-200 need joint lubrication?", "expected_doc": "Nx200 Product Manual", "expected_keywords": ["5,000"]}
+{"question": "What is the annual learning budget per employee?", "expected_doc": "Employee Handbook", "expected_keywords": ["1,500"]}
+{"question": "Which days can we deploy to production?", "expected_doc": "Engineering Onboarding Faq", "expected_keywords": ["sunday", "wednesday"]}
+{"question": "What is the default collision detection force threshold?", "expected_doc": "Nx200 Product Manual", "expected_keywords": ["120 n"]}
+{"question": "Where must API keys and database credentials be stored?", "expected_doc": "Information Security Policy", "expected_keywords": ["vault"]}
+{"question": "How much parental leave do non-birthing parents receive?", "expected_doc": "Employee Handbook", "expected_keywords": ["4 weeks"]}
+{"question": "Which tools are used for CI and monitoring?", "expected_doc": "Engineering Onboarding Faq", "expected_keywords": ["github actions", "grafana"]}
+{"question": "How long is the standard warranty on the robot arm?", "expected_doc": "Nx200 Product Manual", "expected_keywords": ["24-month"]}
+{"question": "Which days are employees expected in the office?", "expected_doc": "Employee Handbook", "expected_keywords": ["tuesday", "thursday"]}
+{"question": "How often must service account credentials be rotated?", "expected_doc": "Information Security Policy", "expected_keywords": ["90 days"]}

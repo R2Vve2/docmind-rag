@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DOCMIND_EMBEDDER: hashing      # offline backends: CI never downloads models or calls an LLM
+      DOCMIND_LLM: extractive
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Unit and API tests
+        run: pytest
+      - name: Retrieval evaluation gate
+        run: python -m docmind.evaluation.run_eval --min-hit-rate 0.9
+      - name: Upload evaluation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: eval/results.json
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t docmind-rag:ci .
+      - name: Smoke test container
+        run: |
+          docker run -d --name docmind -p 8000:8000 -e DOCMIND_EMBEDDER=hashing -e DOCMIND_LLM=extractive docmind-rag:ci
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/health && break; sleep 2; done
+          curl -sf http://localhost:8000/health
+          docker logs docmind

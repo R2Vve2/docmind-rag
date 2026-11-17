@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DocMind</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --text:#e6e6e6; --muted:#9aa3b2; --accent:#4f8cff; --border:#262b36; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:16px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:18px; }
+  #status { color:var(--muted); font-size:13px; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px; display:grid; gap:20px; }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  textarea, input[type=text] { width:100%; background:#0f1115; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:10px; font:inherit; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 16px; font:inherit; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  .answer { white-space:pre-wrap; line-height:1.5; }
+  .cite { border-left:3px solid var(--accent); padding:8px 12px; margin-top:8px; color:var(--muted); font-size:13px; }
+  .cite b { color:var(--text); }
+  .muted { color:var(--muted); font-size:13px; }
+  ul { margin:8px 0 0; padding-left:18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DocMind &mdash; ask your documents</h1>
+  <span id="status">loading&hellip;</span>
+</header>
+<main>
+  <section class="panel">
+    <label for="q"><b>Question</b></label>
+    <textarea id="q" rows="2" placeholder="e.g. How many days of annual leave do employees get?"></textarea>
+    <div class="row">
+      <button id="ask">Ask</button>
+      <label class="muted">top-k <input id="topk" type="number" min="1" max="20" value="5" style="width:60px"></label>
+    </div>
+    <div id="out" style="margin-top:16px"></div>
+  </section>
+  <section class="panel">
+    <b>Add documents</b>
+    <div class="row">
+      <input id="files" type="file" multiple accept=".txt,.md,.pdf" />
+      <button id="upload">Upload</button>
+    </div>
+    <div class="muted" id="docs" style="margin-top:12px"></div>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+async function refresh() {
+  const h = await (await fetch('/health')).json();
+  $('#status').textContent = `${h.documents} docs · ${h.chunks} chunks · embedder=${h.embedder} · llm=${h.llm_backend}`;
+  const docs = await (await fetch('/documents')).json();
+  $('#docs').innerHTML = docs.length ? '<ul>' + docs.map(d => `<li>${d.title} <span class="muted">(${d.chunks} chunks)</span></li>`).join('') + '</ul>' : 'No documents indexed yet.';
+}
+$('#ask').onclick = async () => {
+  const question = $('#q').value.trim();
+  if (question.length < 3) return;
+  $('#ask').disabled = true; $('#out').textContent = 'Thinking…';
+  try {
+    const r = await fetch('/query', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ question, top_k: Number($('#topk').value) }) });
+    const a = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(a));
+    const cites = a.citations.map(c => `<div class="cite"><b>[${c.marker}] ${c.doc_title}</b><br>${c.snippet}…</div>`).join('');
+    $('#out').innerHTML = `<div class="answer">${a.answer}</div>${cites}<div class="muted" style="margin-top:8px">backend: ${a.llm_backend}</div>`;
+  } catch (e) { $('#out').textContent = 'Error: ' + e.message; }
+  $('#ask').disabled = false;
+};
+$('#upload').onclick = async () => {
+  const fd = new FormData();
+  for (const f of $('#files').files) fd.append('files', f);
+  if (![...fd.keys()].length) return;
+  const r = await fetch('/ingest/files', { method:'POST', body: fd });
+  const body = await r.json();
+  $('#docs').textContent = r.ok ? `Indexed ${body.chunks_indexed} chunks.` : 'Error: ' + JSON.stringify(body);
+  await refresh();
+};
+refresh();
+</script>
+</body>
+</html>

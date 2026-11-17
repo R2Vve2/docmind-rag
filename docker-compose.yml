@@ -1,0 +1,17 @@
+services:
+  docmind:
+    build: .
+    image: docmind-rag:latest
+    ports:
+      - "8000:8000"
+    environment:
+      # Set ANTHROPIC_API_KEY in a .env file (or your shell) to enable Claude answers.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DOCMIND_EMBEDDER=${DOCMIND_EMBEDDER:-fastembed}
+      - DOCMIND_LLM=${DOCMIND_LLM:-auto}
+    volumes:
+      - docmind-data:/data   # persisted index + cached embedding model
+    restart: unless-stopped
+
+volumes:
+  docmind-data:

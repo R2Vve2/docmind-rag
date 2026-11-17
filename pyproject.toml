@@ -1,0 +1,18 @@
+[project]
+name = "docmind-rag"
+version = "0.1.0"
+description = "Production-style Retrieval-Augmented Generation service: hybrid search, cited answers, evaluation harness."
+requires-python = ">=3.11"
+readme = "README.md"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]  # line length is advisory; long literals in tests are fine
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
