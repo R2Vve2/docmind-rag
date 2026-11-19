@@ -108,6 +108,26 @@ fails the build if hit@5 drops below 0.9, which turns retrieval quality into a r
 All settings are environment variables prefixed `DOCMIND_` (see `.env.example`): embedder, embedding model,
 chunk size/overlap, `top_k`, RRF constant, index directory, LLM backend and Claude model.
 
+## Deployment (public demo mode)
+
+Three settings make the service safe to expose publicly:
+
+| Variable | Effect |
+|---|---|
+| `DOCMIND_READ_ONLY=true` | Ingest and delete endpoints return 403; the UI hides the upload panel |
+| `DOCMIND_SEED_DIR=data/sample_docs` | Indexes the folder at start-up when the index is empty |
+| `DOCMIND_RATE_LIMIT_PER_MINUTE=20` | Caps `/query` calls per client IP (returns 429 with `Retry-After`) |
+
+The Docker image bakes in the embedding model, so containers start without downloading anything. Ready-made
+configs are included for two hosts:
+
+- **Hugging Face Spaces (free):** create a Docker Space, push this repo with `deploy/huggingface/README.md` as the
+  Space README, and set the three variables above in the Space settings.
+- **Fly.io:** `flyctl launch --no-deploy --copy-config` then `flyctl deploy`, using `fly.toml` (scales to zero when idle).
+
+Keep `DOCMIND_LLM=extractive` on a public deployment unless you add a Claude key deliberately: the rate limit
+bounds abuse, but every Claude-backed question is billed to your key.
+
 ## Development
 
 ```bash

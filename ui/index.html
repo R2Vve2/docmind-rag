@@ -22,6 +22,11 @@
   .cite b { color:var(--text); }
   .muted { color:var(--muted); font-size:13px; }
   ul { margin:8px 0 0; padding-left:18px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .chip { background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:999px; padding:6px 12px; font-size:13px; }
+  .chip:hover { color:var(--text); border-color:var(--accent); }
+  .note { color:var(--muted); font-size:13px; margin:0 0 10px; }
+  a { color:var(--accent); }
 </style>
 </head>
 <body>
@@ -31,15 +36,17 @@
 </header>
 <main>
   <section class="panel">
+    <p class="note" id="intro">Ask a question about four fictional company documents: an employee handbook, a robot-arm product manual, a security policy and an engineering onboarding FAQ. Answers cite the passages they come from. <a href="https://github.com/R2Vve2/docmind-rag">Source on GitHub</a> · <a href="/docs">API docs</a></p>
     <label for="q"><b>Question</b></label>
     <textarea id="q" rows="2" placeholder="e.g. How many days of annual leave do employees get?"></textarea>
     <div class="row">
       <button id="ask">Ask</button>
       <label class="muted">top-k <input id="topk" type="number" min="1" max="20" value="5" style="width:60px"></label>
     </div>
+    <div class="chips" id="examples"></div>
     <div id="out" style="margin-top:16px"></div>
   </section>
-  <section class="panel">
+  <section class="panel" id="upload-panel">
     <b>Add documents</b>
     <div class="row">
       <input id="files" type="file" multiple accept=".txt,.md,.pdf" />
@@ -47,14 +54,31 @@
     </div>
     <div class="muted" id="docs" style="margin-top:12px"></div>
   </section>
+  <section class="panel" id="docs-panel" hidden>
+    <b>Indexed documents</b>
+    <div class="muted" id="docs-ro" style="margin-top:8px"></div>
+  </section>
 </main>
 <script>
 const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const EXAMPLES = [
+  'How many days of annual leave do full-time employees get?',
+  'What is the maximum payload of the NX-200?',
+  'Where must API keys be stored?',
+  'Which days can we deploy to production?',
+];
+$('#examples').innerHTML = EXAMPLES.map((q, i) => `<button class="chip" data-i="${i}">${esc(q)}</button>`).join('');
+$('#examples').onclick = (e) => { const b = e.target.closest('.chip'); if (!b) return; $('#q').value = EXAMPLES[b.dataset.i]; $('#ask').click(); };
+$('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#ask').click(); } });
 async function refresh() {
   const h = await (await fetch('/health')).json();
-  $('#status').textContent = `${h.documents} docs · ${h.chunks} chunks · embedder=${h.embedder} · llm=${h.llm_backend}`;
+  $('#status').textContent = `${h.documents} docs · ${h.chunks} chunks · embedder=${h.embedder} · llm=${h.llm_backend}${h.read_only ? ' · read-only demo' : ''}`;
   const docs = await (await fetch('/documents')).json();
-  $('#docs').innerHTML = docs.length ? '<ul>' + docs.map(d => `<li>${d.title} <span class="muted">(${d.chunks} chunks)</span></li>`).join('') + '</ul>' : 'No documents indexed yet.';
+  const list = docs.length ? '<ul>' + docs.map(d => `<li>${esc(d.title)} <span class="muted">(${d.chunks} chunks)</span></li>`).join('') + '</ul>' : 'No documents indexed yet.';
+  $('#upload-panel').hidden = h.read_only;
+  $('#docs-panel').hidden = !h.read_only;
+  $(h.read_only ? '#docs-ro' : '#docs').innerHTML = list;
 }
 $('#ask').onclick = async () => {
   const question = $('#q').value.trim();
@@ -63,9 +87,9 @@ $('#ask').onclick = async () => {
   try {
     const r = await fetch('/query', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ question, top_k: Number($('#topk').value) }) });
     const a = await r.json();
-    if (!r.ok) throw new Error(JSON.stringify(a));
-    const cites = a.citations.map(c => `<div class="cite"><b>[${c.marker}] ${c.doc_title}</b><br>${c.snippet}…</div>`).join('');
-    $('#out').innerHTML = `<div class="answer">${a.answer}</div>${cites}<div class="muted" style="margin-top:8px">backend: ${a.llm_backend}</div>`;
+    if (!r.ok) throw new Error(a.detail ? (typeof a.detail === 'string' ? a.detail : JSON.stringify(a.detail)) : r.statusText);
+    const cites = a.citations.map(c => `<div class="cite"><b>[${c.marker}] ${esc(c.doc_title)}</b><br>${esc(c.snippet)}…</div>`).join('');
+    $('#out').innerHTML = `<div class="answer">${esc(a.answer)}</div>${cites}<div class="muted" style="margin-top:8px">backend: ${esc(a.llm_backend)}</div>`;
   } catch (e) { $('#out').textContent = 'Error: ' + e.message; }
   $('#ask').disabled = false;
 };
@@ -75,7 +99,7 @@ $('#upload').onclick = async () => {
   if (![...fd.keys()].length) return;
   const r = await fetch('/ingest/files', { method:'POST', body: fd });
   const body = await r.json();
-  $('#docs').textContent = r.ok ? `Indexed ${body.chunks_indexed} chunks.` : 'Error: ' + JSON.stringify(body);
+  $('#docs').textContent = r.ok ? `Indexed ${body.chunks_indexed} chunks.` : 'Error: ' + (body.detail || JSON.stringify(body));
   await refresh();
 };
 refresh();

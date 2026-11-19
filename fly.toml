@@ -1,0 +1,33 @@
+# Fly.io deployment for the public read-only demo.
+#   flyctl launch --no-deploy --copy-config --name <app-name>
+#   flyctl deploy
+app = "docmind-rag"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DOCMIND_READ_ONLY = "true"
+  DOCMIND_SEED_DIR = "data/sample_docs"
+  DOCMIND_RATE_LIMIT_PER_MINUTE = "20"
+  DOCMIND_LLM = "extractive"
+  DOCMIND_EMBEDDER = "fastembed"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"   # scale to zero when idle to keep the bill near zero
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "60s"
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

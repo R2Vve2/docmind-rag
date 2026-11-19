@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     claude_model: str = "claude-opus-5-5"
     max_answer_tokens: int = 4096
 
+    # Public demo hardening
+    read_only: bool = False  # disable ingest/delete endpoints (for public deployments)
+    seed_dir: str | None = None  # folder indexed at start-up when the index is empty
+    rate_limit_per_minute: int = 0  # max /query calls per client IP per minute; 0 disables
+
     def resolved_llm(self) -> str:
         if self.llm != "auto":
             return self.llm

@@ -58,3 +58,4 @@ class HealthResponse(BaseModel):
     chunks: int
     embedder: str
     llm_backend: str
+    read_only: bool = False
