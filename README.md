@@ -118,12 +118,14 @@ Three settings make the service safe to expose publicly:
 | `DOCMIND_SEED_DIR=data/sample_docs` | Indexes the folder at start-up when the index is empty |
 | `DOCMIND_RATE_LIMIT_PER_MINUTE=20` | Caps `/query` calls per client IP (returns 429 with `Retry-After`) |
 
-The Docker image bakes in the embedding model, so containers start without downloading anything. Ready-made
-configs are included for two hosts:
+The Docker image bakes in the embedding model, so containers start without downloading anything, and the running
+demo uses about 250 MB of memory. Ready-made configs are included for three hosts:
 
-- **Hugging Face Spaces (free):** create a Docker Space, push this repo with `deploy/huggingface/README.md` as the
-  Space README, and set the three variables above in the Space settings.
+- **Render (free plan):** in the Render dashboard choose New, Blueprint, pick this repository and apply. `render.yaml`
+  sets the demo variables. Free instances sleep after 15 idle minutes and take about a minute to wake.
 - **Fly.io:** `flyctl launch --no-deploy --copy-config` then `flyctl deploy`, using `fly.toml` (scales to zero when idle).
+- **Hugging Face Spaces:** Docker Spaces require a PRO subscription. Create a Docker Space, push this repo with
+  `deploy/huggingface/README.md` as the Space README, and set the three variables above in the Space settings.
 
 Keep `DOCMIND_LLM=extractive` on a public deployment unless you add a Claude key deliberately: the rate limit
 bounds abuse, but every Claude-backed question is billed to your key.

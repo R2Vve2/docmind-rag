@@ -1,0 +1,21 @@
+# Render Blueprint for the public read-only demo (free plan).
+# Render dashboard -> New -> Blueprint -> pick this repository -> Apply.
+services:
+  - type: web
+    name: docmind-rag
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DOCMIND_READ_ONLY
+        value: "true"
+      - key: DOCMIND_SEED_DIR
+        value: data/sample_docs
+      - key: DOCMIND_RATE_LIMIT_PER_MINUTE
+        value: "20"
+      - key: DOCMIND_LLM
+        value: extractive
+      - key: DOCMIND_EMBEDDER
+        value: fastembed
